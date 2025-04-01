@@ -1,12 +1,12 @@
 const WebSocket = require('ws');
 
-const wss = new WebSocket.Server({ port: 8080 });
+const wss = new WebSocket.Server({ port: 6080 });
 
 // Хранилище для подключенных клиентов и ожидающих игроков
 const clients = new Map(); // Map для хранения { ws -> { nickname: string, status: 'waiting' | 'playing' } }
 let waitingPlayer = null; // Храним ws ожидающего игрока
 
-console.log('WebSocket сервер запущен на порту 8080');
+console.log('WebSocket сервер запущен на порту 6080');
 
 wss.on('connection', (ws) => {
     console.log('Новый клиент подключен');

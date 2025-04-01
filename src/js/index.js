@@ -240,8 +240,8 @@ function setupGameControls(gameInstance) {
 
 // Функция подключения к WebSocket
 function connectWebSocket(nickname) {
-    // Используем ws://localhost:8080 для локального тестирования
-    ws = new WebSocket('ws://localhost:8080');
+    // Новый адрес для WebSocket
+    ws = new WebSocket(`wss://${window.location.host}/ws`);
 
     ws.onopen = () => {
         console.log('WebSocket соединение открыто.');
