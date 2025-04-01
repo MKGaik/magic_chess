@@ -24,7 +24,7 @@ Magic Chess сочетает в себе традиционные правила
 
 1. Клонируйте репозиторий:
 ```bash
-git clone https://github.com/yourusername/magic-chess.git
+git clone https://github.com/MKGaik/magic-chess.git
 cd magic-chess
 ```
 
