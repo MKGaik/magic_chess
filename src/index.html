@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Magic Chess</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background-color: #111;
+      color: #fff;
+      font-family: 'Arial', sans-serif;
+    }
+    
+    #game-container {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+    }
+    
+    #ui-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 10;
+    }
+    
+    .game-panel {
+      position: absolute;
+      background-color: rgba(0, 0, 0, 0.7);
+      border: 1px solid #444;
+      border-radius: 5px;
+      padding: 10px;
+      pointer-events: auto;
+    }
+    
+    #action-panel {
+      top: 10px;
+      left: 10px;
+      width: 300px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .unit-info {
+      margin-bottom: 8px;
+    }
+    
+    .hp-bar, .mp-bar {
+      height: 10px;
+      width: 100%;
+      background: #333;
+      margin-top: 2px;
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    
+    .hp-fill {
+      height: 100%;
+      background: linear-gradient(to right, #ff3030, #ff8080);
+      width: 100%;
+    }
+    
+    .mp-fill {
+      height: 100%;
+      background: linear-gradient(to right, #3030ff, #8080ff);
+      width: 100%;
+    }
+    
+    button {
+      background-color: #2a5298;
+      color: white;
+      border: none;
+      padding: 8px 15px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background-color 0.2s;
+    }
+    
+    button:hover {
+      background-color: #3a62a8;
+    }
+    
+    button:disabled {
+      background-color: #444;
+      cursor: not-allowed;
+    }
+    
+    .hidden {
+      display: none !important; /* Use important to override other display styles if necessary */
+    }
+    
+    .mana-cost {
+      font-size: 0.8em;
+      color: #8080ff;
+      margin-left: 5px;
+    }
+    
+    .skill-info {
+      display: inline-block;
+      width: 18px;
+      height: 18px;
+      line-height: 18px;
+      text-align: center;
+      border-radius: 50%;
+      background-color: #4466cc;
+      color: white;
+      margin-left: 5px;
+      cursor: pointer;
+    }
+    
+    .skill-info:hover {
+      background-color: #5577dd;
+    }
+    
+    /* Стили для диалога с информацией о скилле */
+    .skill-info-dialog {
+      position: fixed;
+      z-index: 1000;
+      width: 350px;
+      background-color: rgba(15, 30, 50, 0.95);
+      border: 2px solid #4466cc;
+      border-radius: 8px;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.8), 0 0 40px rgba(68, 102, 204, 0.4);
+      padding: 15px;
+      color: #ffffff;
+      font-family: 'Arial', sans-serif;
+      text-align: left;
+      animation: dialog-appear 0.2s ease-out;
+    }
+    
+    @keyframes dialog-appear {
+      from { 
+        opacity: 0;
+        transform: scale(0.9);
+      }
+      to { 
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+    
+    .skill-dialog-title {
+      font-size: 20px;
+      font-weight: bold;
+      color: #ffffff;
+      margin-bottom: 10px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #4466cc;
+    }
+    
+    .skill-dialog-description {
+      margin-bottom: 15px;
+      font-size: 14px;
+      line-height: 1.5;
+      color: #cccccc;
+    }
+    
+    .skill-dialog-stats {
+      background-color: rgba(0, 0, 0, 0.3);
+      border-radius: 6px;
+      padding: 10px;
+      margin-bottom: 15px;
+    }
+    
+    .skill-stat {
+      margin: 5px 0;
+      font-size: 14px;
+      display: flex;
+      justify-content: space-between;
+    }
+    
+    .stat-label {
+      color: #aaaaaa;
+      font-weight: normal;
+    }
+    
+    .stat-value {
+      font-weight: bold;
+      color: #ffffff;
+    }
+    
+    .stat-value.damage {
+      color: #ff6666;
+    }
+    
+    .stat-value.heal {
+      color: #66ff66;
+    }
+    
+    .stat-value.mana {
+      color: #66aaff;
+    }
+    
+    .skill-dialog-close {
+      width: 100%;
+      padding: 8px;
+      background-color: #4466cc;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+    
+    .skill-dialog-close:hover {
+      background-color: #5588ee;
+    }
+    
+    #loading-screen {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: #111;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 100;
+    }
+    
+    #skill-panel {
+      display: none;
+      margin-top: 10px;
+      width: 100%;
+    }
+    
+    .skill-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 120px;
+      padding: 8px 10px;
+      position: relative;
+      text-align: center;
+      font-size: 0.9em;
+      flex-direction: column;
+    }
+    
+    .skill-damage {
+      font-size: 0.75em;
+      margin-top: 3px;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-weight: bold;
+    }
+    
+    .skill-damage.damage {
+      background-color: rgba(255, 50, 50, 0.2);
+      color: #ff6666;
+    }
+    
+    .skill-damage.heal {
+      background-color: rgba(50, 255, 50, 0.2);
+      color: #66ff66;
+    }
+    
+    /* Стили для меню выбора режима игры */
+    #game-mode-menu, #nickname-entry, #matchmaking-lobby { /* Добавляем сюда новые ID */
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.9);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 150;
+      text-align: center; /* Центрируем текст */
+    }
+
+    /* Скрываем по умолчанию экраны ввода ника и лобби */
+    #nickname-entry, #matchmaking-lobby {
+        display: none; 
+    }
+    
+    .mode-button, #submit-nickname-btn { /* Применяем стиль к кнопке отправки ника */
+      width: 250px;
+      height: 60px;
+      margin: 10px;
+      font-size: 18px;
+      background-color: #2a5298;
+      transition: transform 0.2s, background-color 0.2s;
+    }
+    
+    .mode-button:hover, #submit-nickname-btn:hover { /* Стиль при наведении */
+      transform: scale(1.05);
+      background-color: #3a62a8;
+    }
+
+    /* Стили для поля ввода ника */
+    #nickname-input {
+        width: 230px; /* Чуть меньше кнопки */
+        padding: 10px;
+        margin-bottom: 15px;
+        font-size: 16px;
+        border: 1px solid #444;
+        border-radius: 4px;
+        background-color: #222;
+        color: #fff;
+    }
+    #nickname-input:focus {
+        outline: none;
+        border-color: #3a62a8;
+    }
+
+    /* Стили для текста в лобби */
+    #lobby-status {
+        font-size: 24px;
+        margin-bottom: 20px;
+    }
+
+    #countdown-timer {
+        font-size: 48px;
+        font-weight: bold;
+    }
+
+  </style>
+</head>
+<body>
+  <!-- Меню выбора режима игры -->
+  <div id="game-mode-menu">
+    <h1>Магические Шахматы</h1>
+    <p>Выберите режим игры:</p>
+    <button id="single-player-btn" class="mode-button">Одиночная игра</button>
+    <button id="multiplayer-btn" class="mode-button">Сетевая игра</button>
+  </div>
+
+  <!-- Экран ввода никнейма (скрыт по умолчанию) -->
+  <div id="nickname-entry">
+      <h1>Сетевая игра</h1>
+      <p>Введите ваш никнейм:</p>
+      <input type="text" id="nickname-input" placeholder="Ваш ник" maxlength="16">
+      <button id="submit-nickname-btn">Найти игру</button>
+      <button id="back-to-menu-from-nickname-btn" class="mode-button" style="height: 40px; font-size: 14px; background-color: #555;">Назад в меню</button>
+  </div>
+
+  <!-- Лобби матчмейкинга (скрыто по умолчанию) -->
+  <div id="matchmaking-lobby">
+      <h1 id="lobby-status">Поиск соперника...</h1>
+      <p id="countdown-timer" class="hidden"></p> <!-- Скрытый таймер обратного отсчета -->
+      <button id="cancel-matchmaking-btn" class="mode-button" style="height: 40px; font-size: 14px; background-color: #803030;">Отменить поиск</button>
+  </div>
+  
+  <div id="loading-screen" class="hidden"> <!-- Изначально скрываем загрузочный экран -->
+    <h1>Magic Chess</h1>
+    <p>Загрузка...</p>
+  </div>
+  
+  <div id="game-container"></div>
+  
+  <div id="ui-overlay">
+    <div id="action-panel" class="game-panel hidden"> <!-- Изначально скрываем панель действий -->
+      <div id="current-turn" style="margin-bottom: 10px; font-weight: bold;">Ход белых</div>
+      <div id="selected-unit-info"></div>
+      <div id="skill-panel" style="display: none; gap: 5px; margin-top: 10px; width: 100%; justify-content: space-around;"> 
+        <button id="skill-1-btn" class="skill-btn">Умение 1</button>
+        <button id="skill-2-btn" class="skill-btn">Умение 2</button>
+        <button id="cancel-skill-btn" style="display: none;">Отмена</button>
+      </div>
+    </div>
+    <!-- Сюда можно будет добавить сообщение о победе при дисконнекте -->
+    <div id="game-message" class="game-panel hidden" style="top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; z-index: 200;">
+        <p id="game-message-text"></p>
+        <button id="back-to-menu-btn">Вернуться в меню</button>
+    </div>
+  </div>
+</body>
+</html> 
